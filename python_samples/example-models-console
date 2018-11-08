@@ -344,7 +344,7 @@ def cmd_handler(cmd_line):
 def cmd_generic_help():
     print("Usage:")
     print("\tmodel | help | exit [args]")
-    print("\te.g. model element_index model_index opcode key_index [data]")
+    print("\te.g. model element_index model_index opcode dst_addr key_index [data]")
 
 
 def cmd_generic_handler(cmd_line):
