@@ -1,0 +1,40 @@
+1. Setup the Zephyr SDK
+
+https://docs.zephyrproject.org/latest/getting_started/installation_linux.html
+
+2. Clone the Zephyr repo
+
+$ git clone https://github.com/zephyrproject-rtos/zephyr.git
+
+* We refer to ${ZEPHYR_ROOT} as the local clone of the zephyr repository.
+
+3. Prepare your computer for the reel_board
+
+  * add /etc/udev/rules.d/99-reel_board.rules
+
+  # Reel Board in DFU Mode
+  SUBSYSTEM=="tty", ENV{ID_REVISION}=="0d28", ENV{ID_MODEL_ID}=="0204", MODE="0666", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
+  SUBSYSTEM=="usb", ATTR{idVendor}=="0d28", ATTR{idProduct}=="0204", MODE="0666", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+4. Create and source ~/.zephyrrc
+
+  export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+  export ZEPHYR_SDK_INSTALL_DIR=<full path of your Zephyr SDK dir>
+
+5. Build the mesh_badge sample app for the reel_board
+
+$ cd {ZEPHYR_ROOT}
+$ source zephyr-env.sh
+$ export BOARD=reel_board
+$ cmake -Breel_board -Hsamples/boards/reel_board/mesh_badge/
+$ make -Creel_board
+
+  ** there will be a lot of missing build dependencies
+
+6. Once the app has compiled connect the reel_board via USB
+
+7. Flash the app to the board
+
+$ make -Creel_board flash
+
+
