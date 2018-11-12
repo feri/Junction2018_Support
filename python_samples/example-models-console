@@ -224,8 +224,8 @@ class OnOffClient(Model):
         Model.__init__(self, model_id=mid)
         self.cmd_ops = { 0x8201: self.get_state, # get
                          0x8202: self.set_state, # set
+                         0x8203: self.set_unack_state, # set unack
                        }
-        print('OnOff Client')
 
     def _reply_cb(state):
         print('State ', end='');
@@ -236,8 +236,15 @@ class OnOffClient(Model):
         node.Send(self.path, dst, key, data, reply_handler=reply_cb,
                   error_handler=error_cb)
 
-    def get_state(self, dst_str, key_idx_str):
+    def get_state(self, dst_str=None, key_idx_str=None):
         print("{}: {} {}".format(self.get_state.__name__, dst_str, key_idx_str))
+
+        if dst_str == None or key_idx_str == None:
+            print("Wrong {} parameters".format(self.set_state.__name__))
+            print("\tdst_addr key_index")
+            print("\n\texample: 0x1234 0")
+
+            return
 
         opcode = 0x8201
         dst = int(dst_str, 0)
@@ -247,27 +254,48 @@ class OnOffClient(Model):
 
         self._send_message(dst, key_idx, data, self._reply_cb)
 
-    def set_state(self, dst_str, key_str, state_str):
-        print("{}: {} {}".format(self.set_state.__name__, dst_str, key_idx_str))
+    def set_state(self, dst_str=None, key_idx_str=None, tid_str=None,
+                  state_str=None, ack_req=True):
+        print("{}: {} {} {} {} {}".format(self.set_state.__name__, dst_str,
+              key_idx_str, tid_str, state_str, ack_req))
 
-        opcode = 0x8202
+        if dst_str == None or key_idx_str == None or tid_str == None or \
+            state_str == None:
+            print("Wrong {} parameters".format(self.set_state.__name__))
+            print("\tdst_addr key_index tid state")
+            print("\n\texample: 0x1234 0 1 0")
+
+            return
+
+        if ack_req:
+            opcode = 0x8202
+        else:
+            opcode = 0x8203
+
         dst = int(dst_str, 0)
-        key_idx = int(key_idx_str)
-        state= int(state_str)
+        key_idx = int(key_idx_str, 0)
+        tid = int(tid_str, 0)
+        state = int(state_str, 0)
 
-        data = struct.pack('<HB', opcode, state)
-        self.send_message(des, key, data, self._reply_cb)
+        data = struct.pack('>HBb', opcode, tid, state)
+        self._send_message(dst, key_idx, data, self._reply_cb)
+
+    def set_unack_state(self, dst_str=None, key_idx_str=None, tid_str=None, state_str=None):
+        self.set_state(dst_str, key_idx_str, tid_str, state_str, False)
+
+        return
 
     def process_message(self, source, key, data):
-        print('OnOfServer process message len ', end = '')
+        print("{}: {} {} {}".format(self.process_message.__name__, source, key, data))
+
         datalen = len(data)
-        print(datalen)
+        print('OnOffServer process message len ', datalen)
 
         if datalen!=3:
             return
 
-        opcode, state=struct.unpack('<HB',bytes(data))
-        if opcode != 0x8202 :
+        opcode, state=struct.unpack('>HB',bytes(data))
+        if opcode != 0x8204 :
             print('Bad opcode ', end='')
             print(hex(opcode))
             return
@@ -344,7 +372,7 @@ def cmd_handler(cmd_line):
 def cmd_generic_help():
     print("Usage:")
     print("\tmodel | help | exit [args]")
-    print("\te.g. model element_index model_index opcode key_index [data]")
+    print("\te.g. model element_index model_index opcode dst_addr key_index [data]")
 
 
 def cmd_generic_handler(cmd_line):
