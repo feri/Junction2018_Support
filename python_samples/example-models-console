@@ -312,7 +312,7 @@ def attach_app_error_cb(error):
 
 def cmd_help():
     print('Usage:')
-    print('\telement_index model_index dst_addr key_index [data]')
+    print('\telement_index model_index opcode dst_addr key_index [data]')
     print('\n\texample: 0 0 0xfbf105 0x7361 0 Participant')
 
 
