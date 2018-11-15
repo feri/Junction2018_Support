@@ -1,0 +1,42 @@
+1. Setup the Zephyr SDK
+
+https://docs.zephyrproject.org/latest/getting_started/installation_linux.html
+
+2. Clone the Zephyr repo
+
+$ git clone https://github.com/zephyrproject-rtos/zephyr.git
+
+* We refer to ${ZEPHYR_ROOT} as the local clone of the zephyr repository.
+
+3. Create and source ~/.zephyrrc
+
+  export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+  export ZEPHYR_SDK_INSTALL_DIR=<full path of your Zephyr SDK dir>
+
+4. Open https://docs.zephyrproject.org/latest/boards/arm/nrf51_pca10028/doc/nrf51_pca10028.html
+and follow the "Nordic nRF5x Segger J-Link" link for installation instructions.
+
+In practice one needs to install:
+
+* J-Link Software and Documentation Pack from Segger
+  https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack
+
+* nRF5x Command-Line Tools
+  https://docs.zephyrproject.org/latest/tools/nordic_segger.html#nordic-segger
+
+4. Once the above mentioned libs and tools are in place you may try to build
+the necessary application
+
+$ cd {ZEPHYR_ROOT}
+$ source zephyr-env.sh
+$ export BOARD=nrf51_pca10028
+$ cmake -Bhci_uart -Hsamples/bluetooth/hci_uart/
+$ make -Chci_uart
+
+6. Once the app has compiled connect the dongle via USB
+
+7. Flash the app to the board
+
+$ make -Chci_uart flash
+
+
