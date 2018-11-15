@@ -16,13 +16,14 @@ except ImportError:
   import gobject as GObject
 from dbus.mainloop.glib import DBusGMainLoop
 
-MESH_SERVICE_NAME = 'org.bluez.mesh'
+MESH_SERVICE_NAME = 'org.bluez.mesh1'
+MESH_SERVICE_PATH = "/org/bluez/mesh1"
 DBUS_PROP_IFACE = 'org.freedesktop.DBus.Properties'
 DBUS_OM_IFACE = 'org.freedesktop.DBus.ObjectManager'
 
-MESH_NETWORK_IFACE = 'org.bluez.mesh.Network'
-MESH_NODE_IFACE = 'org.bluez.mesh.Node'
-MESH_ELEMENT_IFACE = 'org.bluez.mesh.Element'
+MESH_NETWORK_IFACE = 'org.bluez.mesh1.Network'
+MESH_NODE_IFACE = 'org.bluez.mesh1.Node'
+MESH_ELEMENT_IFACE = 'org.bluez.mesh1.Element'
 
 VENDOR_ID_NONE = 0xffff
 
@@ -32,6 +33,10 @@ mainloop = None
 node = None
 composition = []
 token = numpy.uint64(0x76bd4f2372477600)
+
+
+class SigUnit:
+    celsius_temperature = 0x272F
 
 
 def unwrap(item):
@@ -152,8 +157,8 @@ class Element(dbus.service.Object):
     @dbus.service.method(MESH_ELEMENT_IFACE,
                                         in_signature="qqqay", out_signature="")
     def MessageReceived(self, dest, source, key, data):
-        print('Message Received on Element ', end='')
-        print(self.index)
+        print('Received message: dest = {:#x}, source = {:#x}, key = {}, ' \
+            'data = {}'.format(dest, source, key, data))
         for model in self.models:
             model.process_message(source, key, data)
 
@@ -262,7 +267,7 @@ class OnOffClient(Model):
         if dst_str == None or key_idx_str == None or tid_str == None or \
             state_str == None:
             print("Wrong {} parameters".format(self.set_state.__name__))
-            print("\tdst_addr key_index tid state")
+            print("\tstate tid")
             print("\n\texample: 0x1234 0 1 0")
 
             return
@@ -286,7 +291,8 @@ class OnOffClient(Model):
         return
 
     def process_message(self, source, key, data):
-        print("{}: {} {} {}".format(self.process_message.__name__, source, key, data))
+        print("{}, {}: {} {} {}".format(self.__class__.__name__,
+            self.process_message.__name__, source, key, data))
 
         datalen = len(data)
         print('OnOffServer process message len ', datalen)
@@ -304,6 +310,76 @@ class OnOffClient(Model):
         print(hex(state))
 
 
+class SensorClient(Model):
+    def __init__(self, mid):
+        Model.__init__(self, model_id=mid)
+        self.cmd_ops = { 0x8231: self.sens_get, # sens get
+                       }
+        self._responses = { 0x52: self._sensor_status, # sensor status
+                          }
+
+    def _reply_cb(state):
+        print('State ', end='');
+        print(state)
+
+    def _send_message(self, dst, key, data, reply_cb):
+        print('SensorClient send data')
+        node.Send(self.path, dst, key, data, reply_handler=reply_cb,
+                  error_handler=error_cb)
+
+    def sens_get(self, dst_str=None, key_idx_str=None, prop_id_str=None):
+        print("{}: {} {}".format(self.sens_get.__name__, dst_str, key_idx_str,
+              prop_id_str))
+
+        if dst_str == None or key_idx_str == None or prop_id_str == None:
+            print("Wrong {} parameters".format(self.get_state.__name__))
+            print("\tdst_addr key_index prop_id")
+            print("\n\texample: 0x1234 0 0x2A1F")
+
+            return
+
+        opcode = 0x8231
+        dst = int(dst_str, 0)
+        key_idx = int(key_idx_str, 0)
+        prop_id = int(prop_id_str, 0)
+
+        data = struct.pack('>H', opcode)
+        data = data + struct.pack('<H', prop_id)
+
+        self._send_message(dst, key_idx, data, self._reply_cb)
+
+    def _sensor_status(self, data):
+        print('{}: {}'.format(self._sensor_status.__name__,
+            binascii.hexlify(data)))
+        hdr_type = data[0] >> 7
+
+        if hdr_type == 0x00:
+            prop_len = (data[0] & 0x70) >> 4
+            prop_id = (data[0] & 0x03) << 8 | data[1]
+        else:
+            prop_len = data[0] & 0x7f
+            prop_id = data[2] << 8 | data[1]
+
+        print('type {}, len {}, id {:#x}'.format(hdr_type, prop_len, prop_id))
+
+        if prop_id == SigUnit.celsius_temperature:
+            value, = struct.unpack('<h', data[3:])
+            print("Temperature in celcius = {}C".format(value))
+
+
+    def process_message(self, source, key, data):
+        print("{}, {}: {} {} data: {}, len = {}".format(self.__class__.__name__,
+            self.process_message.__name__, source, key, data, len(data)))
+
+        opcode, data=struct.unpack('>B%ds' % (len(data)-1), bytes(data))
+        if opcode in self._responses.keys():
+            #print(data)
+            #data=struc_unpack('<%ds' % len(data), data)
+            self._responses[opcode](data)
+        else:
+            print("Not handled by ", self.__class__.__name__)
+
+
 def attach_app_error_cb(error):
     print('Failed to register application: ' + str(error))
     mainloop.quit()
@@ -311,7 +387,7 @@ def attach_app_error_cb(error):
 
 def cmd_help():
     print('Usage:')
-    print('\telement_index model_index dst_addr key_index [data]')
+    print('\telement_index model_index opcode dst_addr key_index [data]')
     print('\n\texample: 0 0 0xfbf105 0x7361 0 Participant')
 
 
@@ -350,8 +426,8 @@ def cmd_handler(cmd_line):
         model = models[available_vnd_models_id.index(model_id)]
     else:
         print("No model with id =", model_id)
-        print("Available models id =", available_models_id)
-        print("Available vnd models id =", available_vnd_models_id)
+        print("Available models id =", [hex(x) for x in available_models_id if x is not None])
+        print("Available vnd models id =", [hex(x) for x in available_vnd_models_id if x is not None])
 
         cmd_help()
 
@@ -359,7 +435,7 @@ def cmd_handler(cmd_line):
 
     ops = model.cmd_ops
     if op not in ops:
-        print("No op =", op)
+        print("No op =", hex(op))
         print("Available ops =", ["0x" + format(op_hex, 'x') for op_hex in ops])
 
         cmd_help()
@@ -412,7 +488,7 @@ def main():
     global app
 
     mesh_net = dbus.Interface(bus.get_object(MESH_SERVICE_NAME,
-                                             "/org/bluez/mesh"),
+                                             MESH_SERVICE_PATH),
                                              MESH_NETWORK_IFACE)
     mesh_net.connect_to_signal('InterfacesRemoved', interfaces_removed_cb)
 
@@ -420,6 +496,7 @@ def main():
     first_ele = Element(bus, 0x00)
     first_ele.add_model(VndTextClient(0x0000))
     first_ele.add_model(OnOffClient(0x1000))
+    first_ele.add_model(SensorClient(0x1102))
     app.add_element(first_ele)
 
     mainloop = GObject.MainLoop()
