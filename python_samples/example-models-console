@@ -414,8 +414,6 @@ class SensorClient(Model):
 
         opcode, data=struct.unpack('>B%ds' % (len(data)-1), bytes(data))
         if opcode in self._responses.keys():
-            #print(data)
-            #data=struc_unpack('<%ds' % len(data), data)
             self._responses[opcode](data)
         else:
             print("Not handled by ", self.__class__.__name__)
