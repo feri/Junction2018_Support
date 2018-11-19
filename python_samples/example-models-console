@@ -272,6 +272,8 @@ class OnOffClient(Model):
                          0x8202: self.set_state, # set
                          0x8203: self.set_unack_state, # set unack
                        }
+        self._responses = { 0x8204: self._get_state_rsp, # response state
+                          }
 
     def _reply_cb(state):
         print('State ', end='');
@@ -331,24 +333,20 @@ class OnOffClient(Model):
 
         return
 
+    def _get_state_rsp(self, b_state):
+        print('{}: {}'.format(self._get_state_rsp.__name__, b_state))
+
+        print("Got state:", int.from_bytes(b_state, 'big'))
+
     def process_message(self, source, key, data):
-        print("{}, {}: {} {} {}".format(self.__class__.__name__,
-            self.process_message.__name__, source, key, data))
+        print("{}, {}: {} {} data: {}, len = {}".format(self.__class__.__name__,
+            self.process_message.__name__, source, key, data, len(data)))
 
-        datalen = len(data)
-        print('OnOffServer process message len ', datalen)
-
-        if datalen!=3:
-            return
-
-        opcode, state=struct.unpack('>HB',bytes(data))
-        if opcode != 0x8204 :
-            print('Bad opcode ', end='')
-            print(hex(opcode))
-            return
-
-        print('Got state ', end = '')
-        print(hex(state))
+        opcode, data=struct.unpack('>H%ds' % (len(data)-2), bytes(data))
+        if opcode in self._responses.keys():
+            self._responses[opcode](data)
+        else:
+            print("Not handled by ", self.__class__.__name__)
 
 
 class SensorClient(Model):
