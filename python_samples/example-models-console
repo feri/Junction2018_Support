@@ -6,6 +6,9 @@ import numpy
 import threading
 import binascii
 import time
+import os
+import readline
+import traceback
 import dbus
 import dbus.service
 import dbus.exceptions
@@ -35,8 +38,46 @@ composition = []
 token = numpy.uint64(0x76bd4f2372477600)
 
 
+# ANSI escape codes for Select Graphic Rendition (SGR) parameters
+sgr_reset = "\x1B[0m"
+sgr_fg_blue = "\x1B[94m"
+sgr_fg_green = "\x1B[32m"
+sgr_fg_red = "\x1B[31m"
+
+
 class SigUnit:
     celsius_temperature = 0x272F
+
+
+def get_my_name():
+    """Returns name of the script without extension"""
+    script_name = os.path.basename(sys.argv[0]) # in case it is full path
+    script_name_no_ext = os.path.splitext(script_name)[0]
+
+    return script_name_no_ext
+
+
+def red(text):
+    """Return red text"""
+    return sgr_fg_red + text + sgr_reset
+
+
+def green(text):
+    """Return green text"""
+    return sgr_fg_green + text + sgr_reset
+
+
+def blue(text):
+    """Return blue text"""
+    return sgr_fg_blue + text + sgr_reset
+
+
+def get_my_name():
+    """Returns name of the script without extension"""
+    script_name = os.path.basename(sys.argv[0]) # in case it is full path
+    script_name_no_ext = os.path.splitext(script_name)[0]
+
+    return script_name_no_ext
 
 
 def unwrap(item):
@@ -468,14 +509,37 @@ def cmd_generic_handler(cmd_line):
 def console_handler():
     # Give time for application setup
     time.sleep(1)
+    prompt = "%s$ " % (blue("[" + get_my_name() + "]"))
 
-    while True:
-        cmd_line = input('cmd> ')
+    history_filename = os.path.expanduser("~/.%s_history" % get_my_name())
 
-        if cmd_generic_handler(cmd_line):
-            break
+    if os.path.exists(history_filename):
+        print("Reading existing history file %s" % history_filename)
+    else:
+        print("No existing history, creating %s" % history_filename)
+        open(history_filename, 'w+')
 
-    print("Exit from console handler thread (Ctrl-C to close program)")
+    readline.read_history_file(history_filename)
+
+    try:
+        while True:
+            cmd_line = input(prompt)
+
+            try:
+                if cmd_generic_handler(cmd_line):
+                    break
+
+            except TypeError:
+                traceback.print_exc()
+                print("Wrong arguments, see exception msg above")
+                continue
+
+    except:
+        traceback.print_exc()
+
+    finally:
+        readline.write_history_file(history_filename)
+        print("Exit from console handler thread (Ctrl-C to close program)")
 
 
 def main():
@@ -509,8 +573,17 @@ def main():
     t_console = threading.Thread(target=console_handler)
     t_console.start()
 
-    mainloop.run()
-    print("after run")
+    try:
+        mainloop.run()
+
+    except KeyboardInterrupt:
+        sys.exit("Bye!")
+
+    except:
+        import traceback
+        traceback.print_exc()
+        sys.exit(16)
+
 
 if __name__ == '__main__':
     main()
