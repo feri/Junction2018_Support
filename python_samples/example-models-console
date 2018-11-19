@@ -234,7 +234,11 @@ class Model():
 class VndTextClient(Model):
     def __init__(self, mid):
         Model.__init__(self, vnd_id=mid)
-        self.cmd_ops = { 0xfbf105: self.text } # text
+        self.cmd_ops = { 0xfbf105: self.text, # text
+                         0xfdf105: self.get_name, # get text
+                       }
+        self._responses = { 0x0fdf105 : self._get_name_rsp, # response with name
+                          }
 
     def _reply_cb(state):
         print('State ', end='');
@@ -263,6 +267,46 @@ class VndTextClient(Model):
         data = opcode.to_bytes(3, byteorder='big') + data
 
         self._send_message(dst, key_idx, data, self._reply_cb)
+
+    def get_name(self, dst_str=None, key_idx_str=None):
+        print("{}: {} {}".format(self.get_name.__name__, dst_str, key_idx_str))
+
+        if dst_str == None or key_idx_str == None:
+            print("Wrong {} parameters".format(self.get_name.__name__))
+            print("\tdst_addr key_index")
+            print("\n\texample: 0x1234 0")
+
+            return
+
+        opcode = 0x0fdf105
+        dst = int(dst_str, 0)
+        key_idx = int(key_idx_str)
+
+        data = opcode.to_bytes(3, byteorder='big')
+
+        self._send_message(dst, key_idx, data, self._reply_cb)
+
+    def _get_name_rsp(self, b_name):
+        print('{}: {}'.format(self._get_name_rsp.__name__, b_name))
+
+        str_name = b_name.decode('ASCII')
+        print("My name is: ", str_name)
+        return
+
+    def process_message(self, source, key, data):
+        print("{}, {}: {} {} {}".format(self.__class__.__name__,
+            self.process_message.__name__, source, key, data))
+
+        b_data = bytearray(data)
+
+        datalen = len(b_data)
+
+        opcode = int.from_bytes(b_data[:3], 'big')
+
+        if opcode in self._responses.keys():
+            self._responses[opcode](b_data[3:])
+        else:
+            print("Not handled by", self.__class__.__name__)
 
 
 class OnOffClient(Model):
