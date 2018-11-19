@@ -286,7 +286,7 @@ class OnOffClient(Model):
         print("{}: {} {}".format(self.get_state.__name__, dst_str, key_idx_str))
 
         if dst_str == None or key_idx_str == None:
-            print("Wrong {} parameters".format(self.set_state.__name__))
+            print("Wrong {} parameters".format(self.get_state.__name__))
             print("\tdst_addr key_index")
             print("\n\texample: 0x1234 0")
 
