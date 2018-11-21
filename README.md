@@ -21,6 +21,23 @@ Happy Hacking!
 
 ### Support Materials
 
+#### How to Build BlueZ with mesh support
+
+```bash
+git clone https://github.com/intel/Junction2018.git
+cd Junction2018
+./bootstrap-configure --disable-android --disable-systemd --disable-midi --disable-obex --disable-avrcp --disable-cups --disable-network --disable-a2dp --disable-hid --disable-hog
+```
+
+Also 
+```bash
+git clone https://git.kernel.org/pub/scm/libs/ell/ell.git
+git reset --hard 0.13
+make && make install
+```
+
+If you are on Ubuntu you may need to fix `mesh/dbus.c` by hand.
+
 ### Samples
 
 
