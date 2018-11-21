@@ -258,6 +258,8 @@ class VndTextClient(Model):
 
             return
 
+        text_str = ''.join((text_str, '\x00'))
+
         opcode = 0xfbf105
         dst = int(dst_str, 0)
         key_idx = int(key_idx_str)
@@ -415,7 +417,7 @@ class SensorClient(Model):
               prop_id_str))
 
         if dst_str == None or key_idx_str == None or prop_id_str == None:
-            print("Wrong {} parameters".format(self.get_state.__name__))
+            print("Wrong {} parameters".format(self.sens_get.__name__))
             print("\tdst_addr key_index prop_id")
             print("\n\texample: 0x1234 0 0x2A1F")
 
