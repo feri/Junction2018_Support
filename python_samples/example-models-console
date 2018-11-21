@@ -258,6 +258,8 @@ class VndTextClient(Model):
 
             return
 
+        text_str = ''.join((text_str, '\x00'))
+
         opcode = 0xfbf105
         dst = int(dst_str, 0)
         key_idx = int(key_idx_str)
