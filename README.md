@@ -29,6 +29,14 @@ Reel Board: Zephyr, BT mesh app with capabilities to send / receive text message
 
 We have our own WiFi where you join (`jnct-ble5-mesh`). You should use ssh to connect to the NUC. For example `ssh team1`
 
+## Challenge Tech Directions
+
+You are free to choose to which direction you want to go with your project. Below are few ideas.
+
+- Using the sample python as a baseline, create backend which provides REST api and communicated with the meshd via D-Bus Python API. In addition, create a front end app for data visualization and device discovery and control.
+- Extend the Zephyr BT mesh app to add support for more sensors (accelerometer, proximity, etc)
+
+
 ### Support Materials
 
 #### How to Build BlueZ with mesh support
