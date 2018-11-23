@@ -62,6 +62,11 @@ Message to single board (address is *0x0001*)
 model 0 0x0000 0xfbf105 0x0001 0 Hacker1
 ```
 
+Message to single all boards (group address is *0xc123*)
+```
+model 0 0x0000 0xfbf105 0xc123 0 Hacker1
+```
+
 
 ## Challenge Tech Directions
 
