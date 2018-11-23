@@ -37,11 +37,29 @@ We have our own WiFi where you join (`jnct-ble5-mesh`). You should use ssh to co
 
 ## Operating the hacking environment
 
-Login and start the `meshd` by hand on foreground
+Login
 ```
 ssh team1
+```
+
+Start the `meshd` by hand on foreground
+```
 cd $HOME/Junction2018/mesh
 ./meshd -nd
+```
+
+Test the python sample app. It will launch an interactive shell which you can use to talk with the reel boards.
+
+```
+cd $HOME/Junction2018_Support/python_samples
+./example-models-console
+```
+
+In the shell, use the following commands to communicate with your mesh network
+
+Message to single board (address is *0x0001*)
+```
+model 0 0x0000 0xfbf105 0x0001 0 Hacker1
 ```
 
 
