@@ -35,6 +35,16 @@ Reel Board:
 
 We have our own WiFi where you join (`jnct-ble5-mesh`). You should use ssh to connect to the NUC. For example `ssh team1`
 
+## Operating the hacking environment
+
+Login and start the `meshd` by hand on foreground
+```
+ssh team1
+cd $HOME/Junction2018/mesh
+./meshd -nd
+```
+
+
 ## Challenge Tech Directions
 
 You are free to choose to which direction you want to go with your project. Below are few ideas.
