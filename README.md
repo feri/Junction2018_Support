@@ -19,6 +19,16 @@ fully completed, production ready projects.
 
 Happy Hacking!
 
+## Setup
+
+We can host 8 teams. Each team will get a NUC with Linux and 4 reel boards. 
+
+NUC: linux, meshd and python sample
+
+Reel Board: Zephyr, BT mesh app with capabilities to send / receive text messages, blink led and read tempereture. 
+
+We have our own WiFi where you join (`jnct-ble5-mesh`). You should use ssh to connect to the NUC. For example `ssh team1`
+
 ### Support Materials
 
 #### How to Build BlueZ with mesh support
