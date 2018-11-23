@@ -33,8 +33,7 @@ $ make -Creel_board
 
 6. Once the app has compiled connect the reel_board via USB
 
-7. Flash the app to the board
+7. Flash the app to the board, substituting the team number and board node number. 
+For example if you are team 7, and you wish to flash your second board, use:
 
-$ make -Creel_board flash
-
-
+$ make TEAM=1 NODE=2 -Creel_board flash
