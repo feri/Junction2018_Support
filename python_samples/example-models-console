@@ -35,8 +35,9 @@ bus = None
 mainloop = None
 node = None
 composition = []
-token = numpy.uint64(0x76bd4f2372477600)
-
+# Node1 device key: 18654772234fbd76e3b40519d1d66a71
+# Node2 device key: 18654772234fbd76e3b40519d1d66a72
+token = numpy.uint64(0x76bd4f2372476518)
 
 # ANSI escape codes for Select Graphic Rendition (SGR) parameters
 sgr_reset = "\x1B[0m"
@@ -47,6 +48,7 @@ sgr_fg_red = "\x1B[31m"
 
 class SigUnit:
     celsius_temperature = 0x272F
+    acceleromater = 0x2730
 
 
 def get_my_name():
@@ -258,8 +260,6 @@ class VndTextClient(Model):
 
             return
 
-        text_str = ''.join((text_str, '\x00'))
-
         opcode = 0xfbf105
         dst = int(dst_str, 0)
         key_idx = int(key_idx_str)
@@ -417,9 +417,10 @@ class SensorClient(Model):
               prop_id_str))
 
         if dst_str == None or key_idx_str == None or prop_id_str == None:
-            print("Wrong {} parameters".format(self.sens_get.__name__))
+            print("Wrong {} parameters".format(self.get_state.__name__))
             print("\tdst_addr key_index prop_id")
-            print("\n\texample: 0x1234 0 0x2A1F")
+            print("\n\ttemperature example: 0x1234 0 0x2A1F")
+            print("\n\taccelerometer example: 0x1234 0 0x2A20")
 
             return
 
@@ -450,6 +451,10 @@ class SensorClient(Model):
         if prop_id == SigUnit.celsius_temperature:
             value, = struct.unpack('<h', data[3:])
             print("Temperature in celcius = {}C".format(value))
+
+        if prop_id == SigUnit.accelerator:
+            value, = struct.unpack('<h', data[6:])
+            print("Accelerator {}".format(value))
 
 
     def process_message(self, source, key, data):
