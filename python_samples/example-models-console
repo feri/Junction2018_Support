@@ -48,7 +48,7 @@ sgr_fg_red = "\x1B[31m"
 
 class SigUnit:
     celsius_temperature = 0x272F
-    acceleromater = 0x2730
+    accelerometer = 0x2730
 
 
 def get_my_name():
@@ -452,9 +452,10 @@ class SensorClient(Model):
             value, = struct.unpack('<h', data[3:])
             print("Temperature in celcius = {}C".format(value))
 
-        if prop_id == SigUnit.accelerator:
+        if prop_id == SigUnit.accelerometer:
+			# this is surely incorrect
             value, = struct.unpack('<h', data[6:])
-            print("Accelerator {}".format(value))
+            print("Accelerometer {}".format(value))
 
 
     def process_message(self, source, key, data):
